@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <termios.h>
 
 #ifndef NDEBUG
     #define DEBUG_PRINT(fmt, ...) fprintf(stdout, "DEBUG: %s:%d:%s(): " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
@@ -37,7 +39,7 @@ enum IPCType {
 
 void IPC_file(char* file)
 {
-    
+    int
     
 }
 
