@@ -38,29 +38,114 @@ enum IPCType {
     IPC_MESSAGE_QUEUES
 };
 
+int IPC_shared_memory()
+{
+
+    return 0;
+}
+
 int IPC_file(char* file)
 {
-    int fd = open(file, O_RDONLY);
-
-    if (fd < 0) {
-        printf("Error opening file\n");
+    if (file == NULL) {
+        printf("Invalid file argument\n");
         return -1;
     }
 
+    int fd = open(file, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+
+    if (fd == -1) {
+        perror("Error opening file");
+        return -1;
+    }
+
+    struct termios old, no_blockable;
+    tcgetattr(STDIN_FILENO, &old);
+    no_blockable = old;
+    no_blockable.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &no_blockable);
+
+    fd_set fds;
+    struct timeval tv = {0, 0};
+
     char read_buf[1024];
+    size_t read_buf_capacity = sizeof(read_buf) / sizeof(read_buf[0]);
     char write_buf[1024];
-    
+    size_t write_buf_capacity = sizeof(read_buf) / sizeof(write_buf[0]);
+
+    pid_t pid = getpid();
+
+    int ret = 0;
     do {
-        
-        int read_bytes = read(fd, read_buf, sizeof(read_buf));
-        if (read_bytes < 0) {
-            printf("Error reading file\n");
-            return -1;
+        size_t write_buf_size = 0;
+
+        FD_ZERO(&fds);
+        FD_SET(STDIN_FILENO, &fds);
+        int key_pressed = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+
+        if (key_pressed) {
+
+            char ch;
+            if (read(STDIN_FILENO, &ch, 1) < 0) {
+                perror("Error read command");
+                ret = -1;
+                break;
+            }
+
+            if (ch == '\n')
+                break;
+
+            printf("write line: %c", ch);
+            fflush(stdout);
+
+            size_t cur_char = snprintf(write_buf, write_buf_capacity, "process %d: ", pid);
+            write_buf[cur_char++] = ch;
+
+            ssize_t input = 0;
+            while ((input = read(STDIN_FILENO, write_buf + cur_char, 1)) >= 0) {
+
+                write(STDOUT_FILENO, write_buf + cur_char, 1);
+
+                if (cur_char == write_buf_capacity - 2 || write_buf[cur_char] == '\n')
+                    break;
+                cur_char++;
+            }
+
+            if (input < 0) {
+                perror("Error input text");
+                ret = -1;
+                break;
+            }
+
+            cur_char++;
+            write_buf[cur_char] = '\n';
+            write_buf_size = cur_char;
         }
-        printf("read: %s\n", read_buf);
+
+        ssize_t read_bytes = read(fd, read_buf, read_buf_capacity);
+        if (read_bytes < 0) {
+            perror("Error reading file");
+            ret = -1;
+            break;
+        }
+        if (read_bytes > 0) {
+            write(STDOUT_FILENO, read_buf, read_bytes);
+        }
+
+        if (write_buf_size) {
+            ssize_t writed_to_file = write(fd, write_buf, write_buf_size);
+            if (writed_to_file < 0) {
+                perror("Error cannot write to file");
+                return -1;
+            }
+        }
+
+        usleep(1000);
+
     } while (true);
 
-    return 0;
+    tcsetattr(STDIN_FILENO, TCSANOW, &old);
+    close(fd);
+    return ret;
 }
 
 int main(int argc, char* argv[])
@@ -131,6 +216,7 @@ int main(int argc, char* argv[])
     switch (IPC_type) {
 
         case IPC_SHARED_MEMORY:
+            ret = IPC_shared_memory();
             break;
 
         case IPC_FILE:
