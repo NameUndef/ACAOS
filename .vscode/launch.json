@@ -1,7 +1,0 @@
-{
-    "name": "ACAOS Lect 7 IPC",
-    "request": "launch",
-    "program": "${workspaceFolder}/acaos_lect_7_ipc.exe",
-    "args": ["--ipc_type", "arg2"],
-    "cwd": "${workspaceFolder}"
-}

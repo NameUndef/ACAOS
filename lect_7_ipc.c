@@ -37,7 +37,8 @@ enum IPCType {
 
 void IPC_file(char* file)
 {
-
+    
+    
 }
 
 int main(int argc, char* argv[])
@@ -128,7 +129,7 @@ int main(int argc, char* argv[])
 
         case IPC_MESSAGE_QUEUES:
             break;
-            
+
         default:
             break;
     }
