@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <termios.h>
+#include <fcntl.h>
 
 #ifndef NDEBUG
     #define DEBUG_PRINT(fmt, ...) fprintf(stdout, "DEBUG: %s:%d:%s(): " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
@@ -37,10 +38,29 @@ enum IPCType {
     IPC_MESSAGE_QUEUES
 };
 
-void IPC_file(char* file)
+int IPC_file(char* file)
 {
-    int
+    int fd = open(file, O_RDONLY);
+
+    if (fd < 0) {
+        printf("Error opening file\n");
+        return -1;
+    }
+
+    char read_buf[1024];
+    char write_buf[1024];
     
+    do {
+        
+        int read_bytes = read(fd, read_buf, sizeof(read_buf));
+        if (read_bytes < 0) {
+            printf("Error reading file\n");
+            return -1;
+        }
+        printf("read: %s\n", read_buf);
+    } while (true);
+
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -106,6 +126,7 @@ int main(int argc, char* argv[])
     }
 
     DEBUG_PRINT("IPC type: %s", ipc_names[IPC_type - 1]);
+    int ret = 0;
 
     switch (IPC_type) {
 
@@ -114,7 +135,7 @@ int main(int argc, char* argv[])
 
         case IPC_FILE:
             DEBUG_PRINT("File: %s", file);
-            IPC_file(file);
+            ret = IPC_file(file);
             break;
 
         case IPC_SOCKETS:
@@ -136,5 +157,5 @@ int main(int argc, char* argv[])
             break;
     }
 
-    return 0;
+    return ret;
 }
