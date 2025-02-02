@@ -21,24 +21,7 @@
     #define DEBUG_PRINT(fmt, ...)
 #endif
 
-enum ReqArgType {
-    REQ_ARG_NONE,
-    REQ_ARG_IPC_TYPE,
-    REQ_ARG_FILE
-};
-
-enum IPCType {
-    IPC_NONE,
-    IPC_SHARED_MEMORY,
-    IPC_FILE,
-    IPC_SOCKETS,
-    IPC_CHANNELS,
-    IPC_MUTEXES,
-    IPC_SIGNALS,
-    IPC_MESSAGE_QUEUES
-};
-
-int IPC_shared_memory()
+int IPC_shared_memory(bool is_host, char* shared_mem_file, size_t size)
 {
 
     return 0;
@@ -161,38 +144,82 @@ int IPC_file(char* file)
     return ret;
 }
 
+enum FLagType {
+    FLAG_IPC_TYPE,
+    FLAG_FILE,
+    FLAG_SIZE,
+    FLAG_IS_HOST
+};
+
+#define FLAGS_COUNT 4
+
+enum ReqArgType {
+    REQ_ARG_NONE,
+    REQ_ARG_IPC_TYPE,
+    REQ_ARG_FILE,
+    REQ_ARG_SIZE
+};
+
+#define ARGS_COUNT 3
+
+enum IPCType {
+    IPC_NONE,
+    IPC_SHARED_MEMORY,
+    IPC_FILE,
+    IPC_SOCKETS,
+    IPC_CHANNELS,
+    IPC_MUTEXES,
+    IPC_SIGNALS,
+    IPC_MESSAGE_QUEUES
+};
+
+#define IPC_COUNT 7
+
 int main(int argc, char* argv[])
 {
-    enum IPCType IPC_type = IPC_NONE;
-    char* file = NULL;
+    enum IPCType arg_IPC_type = IPC_NONE;
+    char* arg_file = NULL;
+    size_t arg_size = 0;
+    bool arg_is_host = false;
 
     if (argc < 3) {
         printf("Arguments missing\n");
         return -1;
     }
 
-    char flags[][20] = {
+    char flags[FLAGS_COUNT][20] = {
         "--ipc_type",
-        "--file"
+        "--file",
+        "--size",
+        "--is_host"
     };
-    bool reqs[] = {
+    bool reqs[FLAGS_COUNT] = {
         true,
-        true
+        true,
+        true,
+        false
     };
+    bool indicated_flags[FLAGS_COUNT] = {false};
 
-    size_t flags_count = sizeof(flags) / sizeof(flags[0]);
-
-    char ipc_names[][20] = {"shared_memory", "file", "sockets", "channels", "mutexes", "signals", "message_queues"};
-    size_t ipc_names_count = sizeof(ipc_names) / sizeof(ipc_names[0]);
+    char ipc_names[IPC_COUNT][20] = {
+        "shared_memory",
+        "file",
+        "sockets",
+        "channels",
+        "mutexes",
+        "signals",
+        "message_queues"
+    };
 
     enum ReqArgType req_arg = REQ_ARG_NONE;
     for (size_t i = 1; i < argc; i++) {
 
         if (req_arg == REQ_ARG_NONE) {
             bool have_flag = false;
-            for (size_t j = 0; j < flags_count; j++) {
+            for (size_t j = 0; j < FLAGS_COUNT; j++) {
                 if (strcmp(argv[i], flags[j]) == 0) {
                     req_arg = reqs[j] * ((enum ReqArgType) (j + 1));
+                    indicated_flags[j] = true;
                     have_flag = true;
                     break;
                 }
@@ -203,38 +230,48 @@ int main(int argc, char* argv[])
             }
         } else {
             if (req_arg == REQ_ARG_IPC_TYPE) {
-                for (size_t j = 0; j < ipc_names_count; j++) {
+                for (size_t j = 0; j < IPC_COUNT; j++) {
                     if (strcmp(argv[i], ipc_names[j]) == 0) {
-                        IPC_type = (enum IPCType) (j + 1);
+                        arg_IPC_type = (enum IPCType) (j + 1);
                         req_arg = REQ_ARG_NONE;
                         break;
                     }
                 }
-                if (IPC_type == IPC_NONE) {
+                if (arg_IPC_type == IPC_NONE) {
                     printf("Invalid IPC type: %s\n", argv[i]);
                     return -1;
                 }
             }
             
             if (req_arg == REQ_ARG_FILE) {
-                file = argv[i];
+                arg_file = argv[i];
+                req_arg = REQ_ARG_NONE;
+            }
+            size_t x;
+            if (req_arg == REQ_ARG_SIZE) {
+                arg_size = (size_t) strtoul(argv[i], NULL, 10);
                 req_arg = REQ_ARG_NONE;
             }
         }
     }
 
-    DEBUG_PRINT("IPC type: %s", ipc_names[IPC_type - 1]);
+    DEBUG_PRINT("IPC type: %s", ipc_names[arg_IPC_type - 1]);
     int ret = 0;
 
-    switch (IPC_type) {
+    switch (arg_IPC_type) {
 
         case IPC_SHARED_MEMORY:
-            ret = IPC_shared_memory();
+            DEBUG_PRINT(
+                "Is host: %s, File: %s, size: %zu",
+                indicated_flags[FLAG_IS_HOST]? "true" : "false",
+                arg_file,
+                arg_size);
+            ret = IPC_shared_memory(indicated_flags[FLAG_IS_HOST], arg_file, arg_size);
             break;
 
         case IPC_FILE:
-            DEBUG_PRINT("File: %s", file);
-            ret = IPC_file(file);
+            DEBUG_PRINT("File: %s", arg_file);
+            ret = IPC_file(arg_file);
             break;
 
         case IPC_SOCKETS:
