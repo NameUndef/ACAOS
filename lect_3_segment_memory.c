@@ -45,11 +45,11 @@ void print_physical_address(const struct SegmentDescriptor* const segment_descri
     for (size_t i = 0; i < logical_addresses_size; i++) {
 
         PhysicalAddress result = get_pysical_address(
-            segment_descriptors, 
-            segment_descriptors_size, 
+            segment_descriptors,
+            segment_descriptors_size,
             &logical_addresses[i]);
             
-        printf("%d: segment: %d, offset: %d, physical address: 0x%p%s\n", 
+        printf("%zu: segment: %zu, offset: %zu, physical address: 0x%p%s\n",
             i,
             logical_addresses[i].segment, 
             logical_addresses[i].offset,

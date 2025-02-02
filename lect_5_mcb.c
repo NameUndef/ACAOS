@@ -145,7 +145,7 @@ void mem_log(void* mem)
      size_t alloc_size = 0;
      size_t mcb_size = 0;
      do {
-         printf("%d, offset: %d, size: %d\n",
+         printf("%zu, offset: %zu, size: %zu\n",
          i, mcb_cur->offset, mcb_cur->size);
          alloc_size += mcb_cur->size;
          mcb_size += sizeof(struct MemoryControlBlock);
@@ -154,8 +154,8 @@ void mem_log(void* mem)
      } while (mcb_cur != NULL);
      
      printf("total count: "
-     "%d, alloc size: %d, mcb size: %d, "
-     "total size: %d\n", 
+     "%zu, alloc size: %zu, mcb size: %zu, "
+     "total size: %zu\n",
      i, 
      alloc_size,
      mcb_size,

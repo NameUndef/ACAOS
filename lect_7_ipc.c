@@ -64,6 +64,12 @@ int IPC_file(char* file)
     no_blockable.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &no_blockable);
 
+    struct flock lock;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_len = 0;
+    lock.l_start = 0;
+
     fd_set fds;
     struct timeval tv = {0, 0};
 
@@ -96,7 +102,6 @@ int IPC_file(char* file)
 
             printf("write line: %c", ch);
             fflush(stdout);
-
             size_t cur_char = snprintf(write_buf, write_buf_capacity, "process %d: ", pid);
             write_buf[cur_char++] = ch;
 
@@ -132,7 +137,15 @@ int IPC_file(char* file)
         }
 
         if (write_buf_size) {
+
+            fcntl(fd, F_SETLKW, &lock);
+
             ssize_t writed_to_file = write(fd, write_buf, write_buf_size);
+
+            lock.l_type = F_UNLCK;
+            fcntl(fd, F_SETLK, &lock);
+            lock.l_type = F_WRLCK;
+
             if (writed_to_file < 0) {
                 perror("Error cannot write to file");
                 return -1;

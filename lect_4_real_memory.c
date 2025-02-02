@@ -29,7 +29,7 @@ int main()
     };
 
     for (size_t i = 0; i < sizeof(logical_addresses) / sizeof(logical_addresses[0]); i++) {
-        printf("%d: segment: %d, offset: %d, physical address: 0x%p\n",
+        printf("%zu: segment: %zu, offset: %zu, physical address: 0x%p\n",
             i,
             logical_addresses[i].segment,
             logical_addresses[i].offset,

@@ -1,7 +1,6 @@
 
 #include <stdbool.h>
 #include <time.h>
-#include <signal.h>
 
 /* scheduler:
  *  work with threads and processes
@@ -101,7 +100,7 @@ void thread_switch(
 
     *regs = thread_contexts[next_ready_thread];
     thread_states[next_ready_thread] = ACTIVE;
-    printf("%d switch to thread %d\n", *cur_thread, next_ready_thread);
+    printf("%zu switch to thread %zu\n", *cur_thread, next_ready_thread);
     *cur_thread = next_ready_thread;
 }
 
@@ -130,7 +129,7 @@ int main()
     const size_t DEVICE_BUFFER_DATA_CAPACITY = 1000;
     int device_buffer_data[DEVICE_BUFFER_DATA_CAPACITY];
     size_t device_buffer_threads[THREADS_NUM];
-    clock_t device_delay_end;
+    clock_t device_delay_end = 0l;
     size_t device_buffer_data_size = 0;
     size_t device_buffer_threads_size = 0;
 
