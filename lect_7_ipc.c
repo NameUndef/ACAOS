@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 
 #ifndef NDEBUG
     #define DEBUG_PRINT(fmt, ...) fprintf(stdout, "DEBUG: %s:%d:%s(): " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
@@ -23,6 +25,32 @@
 
 int IPC_shared_memory(bool is_host, char* shared_mem_file, size_t size)
 {
+    if (shared_mem_file == NULL) {
+        printf("Error invalid file argument\n");
+        return -1;
+    }
+
+    if (shared_mem_file[0] != '/') {
+        printf("Error file not have slash symbol\n");
+        return -1;
+    }
+
+    for (size_t i = 1; shared_mem_file[i] != '\0'; i++) {
+        if (shared_mem_file[i] == '/') {
+            printf("Error file have slash after first symbol\n");
+            return -1;
+        }
+    }
+
+    int shared_mem_fd = shm_open(shared_mem_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (shared_mem_fd < 0) {
+        perror("Cannot open shared memory file");
+        return -1;
+    }
+
+    if (is_host) {
+
+    }
 
     return 0;
 }
@@ -30,13 +58,13 @@ int IPC_shared_memory(bool is_host, char* shared_mem_file, size_t size)
 int IPC_file(char* file)
 {
     if (file == NULL) {
-        printf("Invalid file argument\n");
+        printf("Error invalid file argument\n");
         return -1;
     }
 
     int fd = open(file, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-    if (fd == -1) {
+    if (fd < 0) {
         perror("Error opening file");
         return -1;
     }
